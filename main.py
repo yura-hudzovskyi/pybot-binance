@@ -1,5 +1,6 @@
 import decimal
 import json
+import os
 
 import websocket
 
@@ -13,8 +14,8 @@ api_url = "https://api.binance.com/api/v3"
 
 # Telegram API URL and bot token
 telegram_api_url = "https://api.telegram.org/bot"
-telegram_bot_token = '6247565543:AAEOCrSc0GCedDXHlj5LF8fTY8z-3ayvRh4'
-telegram_chat_id = '-1001962594807'
+telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
 # Symbol, period, interval, and limit
 
