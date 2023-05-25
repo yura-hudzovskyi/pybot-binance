@@ -6,6 +6,8 @@ A python bot that trades on binance.com
 
 ```bash
 git clone https://github.com/yura-hudzovskyi/pybot-binance.git
+````
+```bash
 cd pybot-binance
 python3 -m venv venv
 source venv/bin/activate
