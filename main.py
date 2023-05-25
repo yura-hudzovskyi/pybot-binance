@@ -1,10 +1,12 @@
 import decimal
 import json
 import os
-
+from dotenv import load_dotenv
 import websocket
 
 from utils import calculate_ma, send_telegram_message
+
+load_dotenv()
 
 # Binance WebSocket URL
 socket_url = "wss://stream.binance.com:9443/ws"
@@ -14,8 +16,8 @@ api_url = "https://api.binance.com/api/v3"
 
 # Telegram API URL and bot token
 telegram_api_url = "https://api.telegram.org/bot"
-telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 
 # Symbol, period, interval, and limit
 

@@ -8,7 +8,6 @@ A python bot that trades on binance.com
 git clone https://github.com/yura-hudzovskyi/pybot-binance.git
 ````
 ```bash
-cd pybot-binance
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -16,12 +15,12 @@ pip install -r requirements.txt
 
 ## Set up your API keys
 ```bash
-cp .env.example .env
+cp .env.sample .env
 ```
 Then edit `.env` file and add your API keys
 
 ## Usage
 
 ```bash
-python3 main.py
+python main.py
 ```
