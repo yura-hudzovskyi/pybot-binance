@@ -1,6 +1,8 @@
 import decimal
 import json
 import os
+
+import requests
 from dotenv import load_dotenv
 import websocket
 
@@ -33,6 +35,23 @@ ma_value = 0
 candle_count = 0
 
 
+def get_candles(symbol, interval, limit):
+    endpoint = f"{api_url}/klines"
+    params = {
+        "symbol": symbol,
+        "interval": interval,
+        "limit": limit
+    }
+    response = requests.get(endpoint, params=params)
+    if response.status_code == 200:
+        candles = json.loads(response.text)
+        data = [decimal.Decimal(candle[4]) for candle in candles]  # Get close prices from candles
+        close_prices.extend(data)
+    else:
+        print("Failed to retrieve candles from Binance API.")
+        return []
+
+
 def on_open(ws):
     print("WebSocket connection opened.")
     subscribe_message = {
@@ -62,6 +81,7 @@ def on_message(ws, message):
 
             close_price = decimal.Decimal(candle_data["c"])
             close_prices.append(close_price)
+            print(close_prices, "INSIDE")
 
             if len(close_prices) > N:
                 close_prices.pop(0)
@@ -87,5 +107,8 @@ def on_close(ws):
 
 if __name__ == "__main__":
     websocket.enableTrace(False) # Enable this to see WebSocket debug messages
+    print(close_prices, "before")
+    get_candles(S, f"{T}m", N)
+    print(close_prices, "after")
     ws = websocket.WebSocketApp(socket_url, on_open=on_open, on_message=on_message, on_close=on_close)
     ws.run_forever()
