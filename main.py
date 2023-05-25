@@ -2,11 +2,11 @@ import decimal
 import json
 import os
 
-import requests
 from dotenv import load_dotenv
 import websocket
+from binance.spot import Spot as Client
 
-from utils import calculate_ma, send_telegram_message
+from utils import calculate_ma, send_telegram_message, get_candles
 
 load_dotenv()
 
@@ -21,10 +21,12 @@ telegram_api_url = "https://api.telegram.org/bot"
 telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 
+Client = Client()
+
 # Symbol, period, interval, and limit
 
 S = "BNBUSDT"  # Trading symbol, e.g., "BNBUSDT"
-N = 5  # Number of candles for moving average
+N = 7  # Number of candles for moving average
 T = 1  # Candle interval in minutes
 L = 3  # Number of candles required to trigger a notification
 
@@ -33,23 +35,6 @@ close_prices = []
 last_kline_time = None
 ma_value = 0
 candle_count = 0
-
-
-def get_candles(symbol, interval, limit):
-    endpoint = f"{api_url}/klines"
-    params = {
-        "symbol": symbol,
-        "interval": interval,
-        "limit": limit
-    }
-    response = requests.get(endpoint, params=params)
-    if response.status_code == 200:
-        candles = json.loads(response.text)
-        data = [decimal.Decimal(candle[4]) for candle in candles]  # Get close prices from candles
-        close_prices.extend(data)
-    else:
-        print("Failed to retrieve candles from Binance API.")
-        return []
 
 
 def on_open(ws):
@@ -86,7 +71,7 @@ def on_message(ws, message):
             if len(close_prices) > N:
                 close_prices.pop(0)
 
-            ma_value = calculate_ma(close_prices)
+            ma_value = calculate_ma(symbol=S, interval=f"{T}m", limit=N, client=Client)
             print(f"Close price: {close_price}, MA: {ma_value}")
 
             if close_price > ma_value:
@@ -106,9 +91,9 @@ def on_close(ws):
 
 
 if __name__ == "__main__":
-    websocket.enableTrace(False) # Enable this to see WebSocket debug messages
+    websocket.enableTrace(True) # Enable this to see WebSocket debug messages
     print(close_prices, "before")
-    get_candles(S, f"{T}m", N)
+    get_candles(S, f"{T}m", N, close_prices, api_url)
     print(close_prices, "after")
     ws = websocket.WebSocketApp(socket_url, on_open=on_open, on_message=on_message, on_close=on_close)
     ws.run_forever()
