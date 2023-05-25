@@ -1,3 +1,4 @@
+import decimal
 import json
 
 import websocket
@@ -18,8 +19,8 @@ telegram_chat_id = '-1001962594807'
 # Symbol, period, interval, and limit
 
 S = "BNBUSDT"  # Trading symbol, e.g., "BNBUSDT"
-N = 10  # Number of candles for moving average
-T = 1  # Candle interval in minutes
+N = 8  # Number of candles for moving average
+T = 30  # Candle interval in minutes
 L = 3  # Number of candles required to trigger a notification
 
 # Initialize variables
@@ -43,14 +44,14 @@ def on_message(ws, message):
     json_message = json.loads(message)
     if "k" in json_message:
         candle_data = json_message["k"]
-        close_price = float(candle_data["c"])
+        close_price = decimal.Decimal(candle_data["c"])
         close_prices.append(close_price)
 
         if len(close_prices) > N:
             close_prices.pop(0)
 
         ma_value = calculate_ma(close_prices)
-        print(ma_value)
+        print(f"Close price: {close_price}, MA: {ma_value}")
 
         if close_price > ma_value:
             candle_count += 1
@@ -68,6 +69,6 @@ def on_close(ws):
 
 
 if __name__ == "__main__":
-    websocket.enableTrace(True)
+    websocket.enableTrace(False) # Enable this to see WebSocket debug messages
     ws = websocket.WebSocketApp(socket_url, on_open=on_open, on_message=on_message, on_close=on_close)
     ws.run_forever()
