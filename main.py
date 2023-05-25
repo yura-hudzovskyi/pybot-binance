@@ -22,12 +22,13 @@ telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 # Symbol, period, interval, and limit
 
 S = "BNBUSDT"  # Trading symbol, e.g., "BNBUSDT"
-N = 8  # Number of candles for moving average
-T = 30  # Candle interval in minutes
+N = 5  # Number of candles for moving average
+T = 1  # Candle interval in minutes
 L = 3  # Number of candles required to trigger a notification
 
 # Initialize variables
 close_prices = []
+last_kline_time = None
 ma_value = 0
 candle_count = 0
 
@@ -44,26 +45,39 @@ def on_open(ws):
 
 def on_message(ws, message):
     global candle_count
+    global last_kline_time
+
     json_message = json.loads(message)
     if "k" in json_message:
         candle_data = json_message["k"]
-        close_price = decimal.Decimal(candle_data["c"])
-        close_prices.append(close_price)
+        print(candle_data["T"])
+        print(last_kline_time)
 
-        if len(close_prices) > N:
-            close_prices.pop(0)
+        if last_kline_time == candle_data["T"]:
+            print("Duplicate kline received, ignoring.")
+            return
 
-        ma_value = calculate_ma(close_prices)
-        print(f"Close price: {close_price}, MA: {ma_value}")
-
-        if close_price > ma_value:
-            candle_count += 1
         else:
-            candle_count = 0
+            last_kline_time = candle_data["T"]
 
-        if candle_count >= L:
-            notification_message = f"Close price intercrossed MA for {S}! Candle count: {candle_count}"
-            send_telegram_message(notification_message, telegram_api_url, telegram_bot_token, telegram_chat_id)
+            close_price = decimal.Decimal(candle_data["c"])
+            close_prices.append(close_price)
+
+            if len(close_prices) > N:
+                close_prices.pop(0)
+
+            ma_value = calculate_ma(close_prices)
+            print(f"Close price: {close_price}, MA: {ma_value}")
+
+            if close_price > ma_value:
+                candle_count += 1
+            else:
+                candle_count = 0
+
+            if candle_count >= L:
+                message = f"Close price {close_price} is above MA {ma_value} for {candle_count} candles."
+                send_telegram_message(message, telegram_api_url, telegram_bot_token, telegram_chat_id)
+                candle_count = 0
 
 
 # WebSocket on_close event handler
